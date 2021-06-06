@@ -1,6 +1,5 @@
 package com.SafeStorage.dto;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,8 +7,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CredentialsDto {
-    private String site;
-    private String username;
-    private String password;
+public class CredentialsSaveDto {
+    private CredentialsDto credentials;
+    private String masterPassword;
 }

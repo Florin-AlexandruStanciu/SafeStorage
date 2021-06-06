@@ -2,6 +2,7 @@ package com.SafeStorage.service;
 
 
 import com.SafeStorage.dto.CredentialsDto;
+import com.SafeStorage.dto.CredentialsSaveDto;
 import com.SafeStorage.model.Credentials;
 import com.SafeStorage.repositories.CredentialsRepository;
 import lombok.AllArgsConstructor;
@@ -30,21 +31,19 @@ public class CredentialsService {
     private final EncryptionService encryptionService;
 
     @Transactional
-    public ResponseEntity<String> save(CredentialsDto credentialsDto) throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
-        credentialsRepository.save(mapCredentials(credentialsDto));
+    public ResponseEntity<String> save(CredentialsSaveDto saveDto) throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
+        credentialsRepository.save(mapCredentials(saveDto));
         return new ResponseEntity<>("Credentiale salvate", HttpStatus.CREATED);
     }
 
     @Transactional(readOnly = true)
-    public List<CredentialsDto> getAll(){
+    public List<CredentialsDto> getAll(String masterPassword){
+
         return credentialsRepository.getByOwner(getConnectedUsername()).stream()
-                .map(cred -> {
+                .map(cred-> {
                     try {
-                        return new CredentialsDto(
-                                cred.getSite(),
-                                encryptionService.decryptData(cred.getPassword(), cred.getUsername()),
-                                cred.getPassword());
-                    } catch (NoSuchPaddingException | NoSuchAlgorithmException | InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException | InvalidKeySpecException e) {
+                        return mapDto(cred,masterPassword);
+                    } catch (NoSuchPaddingException | InvalidKeySpecException | InvalidAlgorithmParameterException | BadPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException | InvalidKeyException e) {
                         e.printStackTrace();
                     }
                     return new CredentialsDto();
@@ -52,16 +51,23 @@ public class CredentialsService {
                 .collect(Collectors.toList());
     }
 
-
-    private Credentials mapCredentials(CredentialsDto credentialsDto) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeySpecException {
-        return new Credentials(
-                getConnectedUsername(),
-                credentialsDto.getSite(),
-                encryptionService.encrypt(credentialsDto.getPassword(), credentialsDto.getUsername()),
-                credentialsDto.getPassword());
+    private CredentialsDto mapDto(Credentials credentials, String masterPassword) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeySpecException {
+        return new CredentialsDto(
+                new String(encryptionService.decryptData(masterPassword, credentials.getSite())),
+                new String(encryptionService.decryptData(masterPassword, credentials.getUsername())),
+                new String(encryptionService.decryptData(masterPassword, credentials.getPassword())));
     }
 
-    private String getConnectedUsername() {
+
+    private Credentials mapCredentials(CredentialsSaveDto saveDto) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeySpecException {
+        return new Credentials(
+                getConnectedUsername(),
+                encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getSite().getBytes()),
+                encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getUsername().getBytes()),
+                encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getPassword().getBytes()));
+    }
+
+    private byte[] getConnectedUsername() {
         String username;
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
@@ -69,6 +75,6 @@ public class CredentialsService {
         } else {
             username = principal.toString();
         }
-        return username;
+        return username.getBytes();
     }
 }
