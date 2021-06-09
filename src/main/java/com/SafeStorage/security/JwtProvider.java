@@ -1,22 +1,22 @@
 package com.SafeStorage.security;
 
-import com.SafeStorage.model.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import javax.swing.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.time.Instant;
+import java.util.Date;
 
 import static io.jsonwebtoken.Jwts.parser;
 
 @Service
 public class JwtProvider {
+    public static final long JWT_EXPIRATION_TIME = 1000000L;
     private KeyStore keyStore;
 
     @PostConstruct
@@ -35,6 +35,7 @@ public class JwtProvider {
         return Jwts.builder()
                 .setSubject(username)
                 .signWith(getPrivateKey())
+                .setExpiration(Date.from(Instant.now().plusMillis(JWT_EXPIRATION_TIME)))
                 .compact();
     }
 

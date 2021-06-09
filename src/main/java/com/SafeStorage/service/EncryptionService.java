@@ -2,34 +2,27 @@ package com.SafeStorage.service;
 
 import org.springframework.stereotype.Service;
 
-import javax.crypto.*;
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
 
 @Service
 public class EncryptionService {
 
-    public static SecretKey generateSecretKey(String password, byte [] iv) throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public static SecretKey generateSecretKey(String password, byte [] iv) throws Exception {
         KeySpec spec = new PBEKeySpec(password.toCharArray(), iv, 65536, 128); // AES-128
         SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
         byte[] key = secretKeyFactory.generateSecret(spec).getEncoded();
         return new SecretKeySpec(key, "AES");
     }
 
-    public byte [] encrypt(String password, byte [] data) throws NoSuchPaddingException,
-            NoSuchAlgorithmException,
-            InvalidAlgorithmParameterException,
-            InvalidKeyException,
-            BadPaddingException,
-            IllegalBlockSizeException, InvalidKeySpecException {
+    public byte [] encrypt(String password, byte [] data) throws Exception {
 
         //Prepare the nonce
         SecureRandom secureRandom = new SecureRandom();
@@ -58,14 +51,7 @@ public class EncryptionService {
         return byteBuffer.array();
     }
 
-    public byte [] decryptData(String password, byte [] encryptedData)
-            throws NoSuchPaddingException,
-            NoSuchAlgorithmException,
-            InvalidAlgorithmParameterException,
-            InvalidKeyException,
-            BadPaddingException,
-            IllegalBlockSizeException,
-            InvalidKeySpecException {
+    public byte [] decryptData(String password, byte [] encryptedData) throws Exception {
 
 
         //Wrap the data into a byte buffer to ease the reading process

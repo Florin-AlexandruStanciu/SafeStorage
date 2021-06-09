@@ -17,12 +17,12 @@ public class Credentials {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @NotNull
-    private byte[] owner;
+    private String owner;
     private byte[] site;
     private byte[] username;
     private byte[] password;
 
-    public Credentials(byte[] owner, byte[] site, byte[] username, byte[] password) {
+    public Credentials(String owner, byte[] site, byte[] username, byte[] password) {
         this.owner = owner;
         this.site = site;
         this.username = username;

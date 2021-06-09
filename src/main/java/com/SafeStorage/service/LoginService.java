@@ -16,6 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 import static org.apache.logging.log4j.util.Strings.isEmpty;
 
 @Service
@@ -49,7 +50,7 @@ public class LoginService {
                 passwordEncoder.encode(loginCredentials.getPassword())
         ));
 
-        return new ResponseEntity<>("Utilizator creat", HttpStatus.OK);
+        return new ResponseEntity<>(" Utilizator creat", HttpStatus.OK);
     }
 
     public AuthResponse login(LoginCredentials loginCredentials) {
@@ -61,6 +62,6 @@ public class LoginService {
         );
         SecurityContextHolder.getContext().setAuthentication(authenticate);
         String token = jwtProvider.generateToken(loginCredentials.getUsername());
-        return new AuthResponse(token, loginCredentials.getUsername());
+        return new AuthResponse(token,loginCredentials.getUsername());
     }
 }

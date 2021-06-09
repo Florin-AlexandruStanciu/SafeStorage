@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class CredentialsDto {
+    private long id;
     private String site;
     private String username;
     private String password;

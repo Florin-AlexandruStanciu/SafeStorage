@@ -13,13 +13,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,7 +24,7 @@ public class CredentialsService {
     private final EncryptionService encryptionService;
 
     @Transactional
-    public ResponseEntity<String> save(CredentialsSaveDto saveDto) throws NoSuchPaddingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidKeyException, InvalidKeySpecException {
+    public ResponseEntity<String> save(CredentialsSaveDto saveDto) throws Exception {
         credentialsRepository.save(mapCredentials(saveDto));
         return new ResponseEntity<>("Credentiale salvate", HttpStatus.CREATED);
     }
@@ -43,7 +36,7 @@ public class CredentialsService {
                 .map(cred-> {
                     try {
                         return mapDto(cred,masterPassword);
-                    } catch (NoSuchPaddingException | InvalidKeySpecException | InvalidAlgorithmParameterException | BadPaddingException | IllegalBlockSizeException | NoSuchAlgorithmException | InvalidKeyException e) {
+                    } catch (Exception e) {
                         e.printStackTrace();
                     }
                     return new CredentialsDto();
@@ -51,15 +44,16 @@ public class CredentialsService {
                 .collect(Collectors.toList());
     }
 
-    private CredentialsDto mapDto(Credentials credentials, String masterPassword) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeySpecException {
+    private CredentialsDto mapDto(Credentials credentials, String masterPassword) throws Exception {
         return new CredentialsDto(
+                credentials.getId(),
                 new String(encryptionService.decryptData(masterPassword, credentials.getSite())),
                 new String(encryptionService.decryptData(masterPassword, credentials.getUsername())),
                 new String(encryptionService.decryptData(masterPassword, credentials.getPassword())));
     }
 
 
-    private Credentials mapCredentials(CredentialsSaveDto saveDto) throws NoSuchPaddingException, InvalidKeyException, NoSuchAlgorithmException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeySpecException {
+    private Credentials mapCredentials(CredentialsSaveDto saveDto) throws Exception {
         return new Credentials(
                 getConnectedUsername(),
                 encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getSite().getBytes()),
@@ -67,7 +61,7 @@ public class CredentialsService {
                 encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getPassword().getBytes()));
     }
 
-    private byte[] getConnectedUsername() {
+    private String getConnectedUsername() {
         String username;
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof UserDetails) {
@@ -75,6 +69,6 @@ public class CredentialsService {
         } else {
             username = principal.toString();
         }
-        return username.getBytes();
+        return username;
     }
 }
