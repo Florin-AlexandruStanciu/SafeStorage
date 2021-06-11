@@ -36,7 +36,7 @@ public class LoginService {
     public ResponseEntity<String> createAccount(LoginCredentials loginCredentials){
 
         if(userRepository.findById(loginCredentials.getUsername()).isPresent()){
-            return new ResponseEntity<>("Acest nume de utilizator exista deja", HttpStatus.IM_USED);
+            return new ResponseEntity<>("Acest nume de utilizator exista deja", HttpStatus.BAD_REQUEST);
         }
         if(isEmpty(loginCredentials.getPassword())) {
             return new ResponseEntity<>("Parola nula",HttpStatus.BAD_REQUEST);

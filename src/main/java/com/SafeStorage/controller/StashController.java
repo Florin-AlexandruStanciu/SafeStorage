@@ -5,7 +5,9 @@ import com.SafeStorage.dto.CredentialsDto;
 import com.SafeStorage.dto.CredentialsSaveDto;
 import com.SafeStorage.service.CredentialsService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,12 +19,12 @@ public class StashController {
 
     private final CredentialsService credentialsService;
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<String> createCredentials(@RequestBody CredentialsSaveDto credentialsSaveDto) throws Exception {
         return credentialsService.save(credentialsSaveDto);
     }
 
-    @GetMapping
+    @PostMapping
     public List<CredentialsDto> getCredentials(@RequestBody String password) {
         return credentialsService.getAll(password);
     }
