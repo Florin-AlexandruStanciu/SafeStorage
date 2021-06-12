@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,7 +26,15 @@ public class CredentialsService {
 
     @Transactional
     public ResponseEntity<String> save(CredentialsSaveDto saveDto) throws Exception {
-        credentialsRepository.save(mapCredentials(saveDto));
+        try {
+            credentialsRepository.save(mapCredentials(saveDto));
+        } catch (Exception e){
+            if ( "Credentialele nu iti apartin".equals(e.getMessage())){
+                return new ResponseEntity<>("Credentialele nu iti apartin", HttpStatus.BAD_REQUEST);
+            } else {
+                throw e;
+            }
+        }
         return new ResponseEntity<>("Credentiale salvate", HttpStatus.CREATED);
     }
 
@@ -44,6 +53,21 @@ public class CredentialsService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
+    public ResponseEntity<String> delete(Long id){
+        try {
+            checkCredentialOwner(id);
+            credentialsRepository.deleteById(id);
+        } catch (Exception e){
+            if ( "Credentialele nu iti apartin".equals(e.getMessage())){
+                return new ResponseEntity<>("Credentialele nu iti apartin", HttpStatus.BAD_REQUEST);
+            } else {
+                throw e;
+            }
+        }
+        return new ResponseEntity<>("Credentiale sterse", HttpStatus.OK);
+    }
+
     private CredentialsDto mapDto(Credentials credentials, String masterPassword) throws Exception {
         return new CredentialsDto(
                 credentials.getId(),
@@ -54,19 +78,29 @@ public class CredentialsService {
 
 
     private Credentials mapCredentials(CredentialsSaveDto saveDto) throws Exception {
-        if(saveDto.getCredentials().getId() == -1) {
+        if(saveDto.getCredentials().getId() < 1) {
             return new Credentials(
                     getConnectedUsername(),
                     encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getSite().getBytes()),
                     encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getUsername().getBytes()),
                     encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getPassword().getBytes()));
         } else {
+            checkCredentialOwner(saveDto.getCredentials().getId());
             return new Credentials(
                     saveDto.getCredentials().getId(),
                     getConnectedUsername(),
                     encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getSite().getBytes()),
                     encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getUsername().getBytes()),
                     encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getPassword().getBytes()));
+        }
+    }
+
+    private void checkCredentialOwner(long id){
+        Optional<Credentials> optional = credentialsRepository.getCredentialsById(id);
+        if(optional.isPresent()){
+            if(!getConnectedUsername().equals(optional.get().getOwner())){
+                throw new IllegalStateException("Credentialele nu iti apartin");
+            }
         }
     }
 

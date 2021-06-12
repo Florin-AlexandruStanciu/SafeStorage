@@ -1,14 +1,14 @@
 package com.SafeStorage.controller;
 
 import com.SafeStorage.dto.CredentialsDto;
-
 import com.SafeStorage.dto.CredentialsSaveDto;
 import com.SafeStorage.service.CredentialsService;
 import lombok.AllArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -28,4 +28,10 @@ public class StashController {
     public List<CredentialsDto> getCredentials(@RequestBody String password) {
         return credentialsService.getAll(password);
     }
+
+    @PostMapping("/delete")
+    public ResponseEntity<String> deleteCredentials(@RequestBody Long id) {
+        return credentialsService.delete(id);
+    }
+
 }
