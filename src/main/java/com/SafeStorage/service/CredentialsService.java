@@ -54,11 +54,20 @@ public class CredentialsService {
 
 
     private Credentials mapCredentials(CredentialsSaveDto saveDto) throws Exception {
-        return new Credentials(
-                getConnectedUsername(),
-                encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getSite().getBytes()),
-                encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getUsername().getBytes()),
-                encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getPassword().getBytes()));
+        if(saveDto.getCredentials().getId() == -1) {
+            return new Credentials(
+                    getConnectedUsername(),
+                    encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getSite().getBytes()),
+                    encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getUsername().getBytes()),
+                    encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getPassword().getBytes()));
+        } else {
+            return new Credentials(
+                    saveDto.getCredentials().getId(),
+                    getConnectedUsername(),
+                    encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getSite().getBytes()),
+                    encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getUsername().getBytes()),
+                    encryptionService.encrypt(saveDto.getMasterPassword(), saveDto.getCredentials().getPassword().getBytes()));
+        }
     }
 
     private String getConnectedUsername() {
