@@ -7,6 +7,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CredentialsRepository extends JpaRepository<Credentials, Long> {
-    Optional<Credentials> getCredentialsById(long id);
+    Optional<Credentials> getCredentialsById(Long id);
     List<Credentials> getByOwner(String owner);
 }

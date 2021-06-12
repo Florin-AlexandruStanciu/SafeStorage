@@ -95,7 +95,7 @@ public class CredentialsService {
         }
     }
 
-    private void checkCredentialOwner(long id){
+    private void checkCredentialOwner(Long id){
         Optional<Credentials> optional = credentialsRepository.getCredentialsById(id);
         if(optional.isPresent()){
             if(!getConnectedUsername().equals(optional.get().getOwner())){
