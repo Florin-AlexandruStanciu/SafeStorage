@@ -12,6 +12,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +54,7 @@ public class LoginService {
         return new ResponseEntity<>(" Utilizator creat", HttpStatus.OK);
     }
 
+    @Transactional
     public AuthResponse login(LoginCredentials loginCredentials) {
         Authentication authenticate = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -63,5 +65,25 @@ public class LoginService {
         SecurityContextHolder.getContext().setAuthentication(authenticate);
         String token = jwtProvider.generateToken(loginCredentials.getUsername());
         return new AuthResponse(token,loginCredentials.getUsername());
+    }
+
+    @Transactional
+    public ResponseEntity<String> changePassword(String newPassword){
+        if(isEmpty(newPassword)){
+            return new ResponseEntity<>("Parola nula",HttpStatus.BAD_REQUEST);
+        }
+        userRepository.save(new User(getConnectedUsername(),passwordEncoder.encode(newPassword)));
+        return new ResponseEntity<>("Parola modificata", HttpStatus.OK);
+    }
+
+    public static String getConnectedUsername() {
+        String username;
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            username = ((UserDetails) principal).getUsername();
+        } else {
+            username = principal.toString();
+        }
+        return username;
     }
 }

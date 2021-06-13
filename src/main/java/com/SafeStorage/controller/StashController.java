@@ -1,5 +1,6 @@
 package com.SafeStorage.controller;
 
+import com.SafeStorage.dto.ChangePasswordDto;
 import com.SafeStorage.dto.CredentialsDto;
 import com.SafeStorage.dto.CredentialsSaveDto;
 import com.SafeStorage.service.CredentialsService;

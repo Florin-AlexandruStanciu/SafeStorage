@@ -1,5 +1,6 @@
 package com.SafeStorage.service;
 
+import com.SafeStorage.dto.ChangePasswordDto;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -51,7 +52,7 @@ public class EncryptionService {
         return byteBuffer.array();
     }
 
-    public byte [] decryptData(String password, byte [] encryptedData) throws Exception {
+    public byte [] decrypt(String password, byte [] encryptedData) throws Exception {
 
 
         //Wrap the data into a byte buffer to ease the reading process
@@ -82,6 +83,11 @@ public class EncryptionService {
         //Encrypt the data
         return cipher.doFinal(cipherBytes);
 
+    }
+
+
+    public byte [] changePassword(byte [] encryptedData, ChangePasswordDto changePasswordDto) throws Exception {
+        return encrypt(changePasswordDto.getNewPassword(), decrypt(changePasswordDto.getOldPassword(),encryptedData));
     }
 
 

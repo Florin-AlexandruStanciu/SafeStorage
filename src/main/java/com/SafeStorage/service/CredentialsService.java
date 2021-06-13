@@ -1,6 +1,7 @@
 package com.SafeStorage.service;
 
 
+import com.SafeStorage.dto.ChangePasswordDto;
 import com.SafeStorage.dto.CredentialsDto;
 import com.SafeStorage.dto.CredentialsSaveDto;
 import com.SafeStorage.model.Credentials;
@@ -16,6 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.SafeStorage.service.LoginService.getConnectedUsername;
+import static org.apache.logging.log4j.util.Strings.isEmpty;
 
 @Service
 @AllArgsConstructor
@@ -68,12 +72,30 @@ public class CredentialsService {
         return new ResponseEntity<>("Credentiale sterse", HttpStatus.OK);
     }
 
+    @Transactional
+    public void changePassword(ChangePasswordDto changePasswordDto) throws Exception {
+        if(isEmpty(changePasswordDto.getNewPassword())){
+            throw new IllegalArgumentException("Parola nula");
+        }
+        for (Credentials credentials : credentialsRepository.getByOwner(getConnectedUsername())) {
+            Credentials changePasswordForOneEntry = changePasswordForOneEntry(credentials,changePasswordDto);
+            credentialsRepository.save(changePasswordForOneEntry);
+        }
+    }
+
+    private Credentials changePasswordForOneEntry(Credentials creds, ChangePasswordDto changePasswordDto) throws Exception {
+        creds.setPassword(encryptionService.changePassword(creds.getPassword(),changePasswordDto));
+        creds.setUsername(encryptionService.changePassword(creds.getUsername(),changePasswordDto));
+        creds.setSite(encryptionService.changePassword(creds.getSite(),changePasswordDto));
+        return creds;
+    }
+
     private CredentialsDto mapDto(Credentials credentials, String masterPassword) throws Exception {
         return new CredentialsDto(
                 credentials.getId(),
-                new String(encryptionService.decryptData(masterPassword, credentials.getSite())),
-                new String(encryptionService.decryptData(masterPassword, credentials.getUsername())),
-                new String(encryptionService.decryptData(masterPassword, credentials.getPassword())));
+                new String(encryptionService.decrypt(masterPassword, credentials.getSite())),
+                new String(encryptionService.decrypt(masterPassword, credentials.getUsername())),
+                new String(encryptionService.decrypt(masterPassword, credentials.getPassword())));
     }
 
 
@@ -104,14 +126,4 @@ public class CredentialsService {
         }
     }
 
-    private String getConnectedUsername() {
-        String username;
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (principal instanceof UserDetails) {
-            username = ((UserDetails) principal).getUsername();
-        } else {
-            username = principal.toString();
-        }
-        return username;
-    }
 }
