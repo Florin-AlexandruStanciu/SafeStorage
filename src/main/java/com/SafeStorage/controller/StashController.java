@@ -1,15 +1,12 @@
 package com.SafeStorage.controller;
 
-import com.SafeStorage.dto.ChangePasswordDto;
-import com.SafeStorage.dto.CredentialsDto;
-import com.SafeStorage.dto.CredentialsSaveDto;
+import com.SafeStorage.dto.*;
 import com.SafeStorage.service.CredentialsService;
+import com.SafeStorage.service.UserFilesService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.parameters.P;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -19,6 +16,7 @@ import java.util.List;
 public class StashController {
 
     private final CredentialsService credentialsService;
+    private final UserFilesService userFilesService;
 
     @PostMapping("/create")
     public ResponseEntity<String> createCredentials(@RequestBody CredentialsSaveDto credentialsSaveDto) throws Exception {
@@ -33,6 +31,26 @@ public class StashController {
     @PostMapping("/delete")
     public ResponseEntity<String> deleteCredentials(@RequestBody Long id) {
         return credentialsService.delete(id);
+    }
+
+    @PostMapping("/files/create")
+    public ResponseEntity<String> saveFile(@RequestBody SaveFileDto saveFileDto) throws Exception {
+        return userFilesService.save(saveFileDto);
+    }
+
+    @PostMapping("/files/getAll")
+    public List<UserFileDto> getAllFiles(@RequestBody String password) {
+        return userFilesService.getAllFileNames(password);
+    }
+
+    @PostMapping("files/getWholeFile")
+    public FileDto getFile(@RequestBody GetFileDto getFileDto){
+        return userFilesService.getWholeFile(getFileDto.getId(),getFileDto.getPassword());
+    }
+
+    @PostMapping("/files/delete")
+    public ResponseEntity<String> deleteFile(@RequestBody Long id){
+       return userFilesService.delete(id);
     }
 
 }

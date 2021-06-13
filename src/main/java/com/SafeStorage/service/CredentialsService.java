@@ -9,8 +9,6 @@ import com.SafeStorage.repositories.CredentialsRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,12 +41,12 @@ public class CredentialsService {
     }
 
     @Transactional(readOnly = true)
-    public List<CredentialsDto> getAll(String masterPassword){
+    public List<CredentialsDto> getAll(String password){
 
         return credentialsRepository.getByOwner(getConnectedUsername()).stream()
                 .map(cred-> {
                     try {
-                        return mapDto(cred,masterPassword);
+                        return mapDto(cred,password);
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -62,12 +60,8 @@ public class CredentialsService {
         try {
             checkCredentialOwner(id);
             credentialsRepository.deleteById(id);
-        } catch (Exception e){
-            if ( "Credentialele nu iti apartin".equals(e.getMessage())){
-                return new ResponseEntity<>("Credentialele nu iti apartin", HttpStatus.BAD_REQUEST);
-            } else {
-                throw e;
-            }
+        } catch (IllegalStateException e){
+                return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>("Credentiale sterse", HttpStatus.OK);
     }
@@ -118,12 +112,13 @@ public class CredentialsService {
     }
 
     private void checkCredentialOwner(Long id){
-        Optional<Credentials> optional = credentialsRepository.getCredentialsById(id);
+        Optional<Credentials> optional = credentialsRepository.getById(id);
         if(optional.isPresent()){
             if(!getConnectedUsername().equals(optional.get().getOwner())){
                 throw new IllegalStateException("Credentialele nu iti apartin");
             }
         }
+        throw new IllegalStateException("Credentialele au fost deja sterse");
     }
 
 }
