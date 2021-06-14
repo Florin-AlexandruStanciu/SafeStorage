@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SaveFileDto {
-
     private String password;
     private FileDto fileDto;
 

@@ -1,6 +1,7 @@
 package com.SafeStorage.service;
 
 
+import com.SafeStorage.dto.ChangePasswordDto;
 import com.SafeStorage.dto.FileDto;
 import com.SafeStorage.dto.SaveFileDto;
 import com.SafeStorage.dto.UserFileDto;
@@ -76,6 +77,24 @@ public class UserFilesService {
         return new ResponseEntity<>("Fisier sters",HttpStatus.OK);
     }
 
+    @Transactional
+    public void changePassword(ChangePasswordDto changePasswordDto){
+        getAllFileNames(changePasswordDto.getOldPassword()).forEach(
+                userFileDto -> {
+                    try {
+                        SaveFileDto saveFileDto = new SaveFileDto(
+                                changePasswordDto.getNewPassword(),
+                                getWholeFile(userFileDto.getId(),changePasswordDto.getOldPassword())
+                        );
+                        userFilesRepository.save(mapUserFileUpdate(saveFileDto,userFileDto.getId()));
+                        fileRepository.save(mapFileUpdate(saveFileDto,userFileDto.getId()));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+        );
+    }
+
     private FileDto mapDto(FileModel fileModel, String password) throws Exception {
         return new FileDto(
                 new String(encryptionService.decrypt(password,fileModel.getName())),
@@ -92,6 +111,23 @@ public class UserFilesService {
         );
     }
 
+    private FileModel mapFileUpdate(SaveFileDto fileDto, Long id) throws Exception {
+        return new FileModel(
+                id,
+                encryptionService.encrypt(fileDto.getPassword(),fileDto.getFileDto().getName().getBytes()),
+                encryptionService.encrypt(fileDto.getPassword(),fileDto.getFileDto().getType().getBytes()),
+                encryptionService.encrypt(fileDto.getPassword(),fileDto.getFileDto().getBytes())
+        );
+    }
+
+
+    private UserFile mapUserFileUpdate(SaveFileDto saveFileDto, Long id) throws Exception {
+        return new UserFile(
+                id,
+                getConnectedUsername(),
+                encryptionService.encrypt(saveFileDto.getPassword(),saveFileDto.getFileDto().getName().getBytes())
+        );
+    }
 
     private UserFile mapUserFile(SaveFileDto saveFileDto) throws Exception {
         return new UserFile(
