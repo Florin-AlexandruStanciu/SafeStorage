@@ -30,12 +30,8 @@ public class CredentialsService {
     public ResponseEntity<String> save(CredentialsSaveDto saveDto) throws Exception {
         try {
             credentialsRepository.save(mapCredentials(saveDto));
-        } catch (Exception e){
-            if ( "Credentialele nu iti apartin".equals(e.getMessage())){
-                return new ResponseEntity<>("Credentialele nu iti apartin", HttpStatus.BAD_REQUEST);
-            } else {
-                throw e;
-            }
+        } catch (IllegalStateException e){
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>("Credentiale salvate", HttpStatus.CREATED);
     }
