@@ -117,8 +117,9 @@ public class CredentialsService {
             if(!getConnectedUsername().equals(optional.get().getOwner())){
                 throw new IllegalStateException("Credentialele nu iti apartin");
             }
+        } else {
+            throw new IllegalStateException("Credentialele au fost deja sterse");
         }
-        throw new IllegalStateException("Credentialele au fost deja sterse");
     }
 
 }

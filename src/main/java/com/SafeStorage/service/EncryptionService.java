@@ -17,79 +17,54 @@ import java.security.spec.KeySpec;
 public class EncryptionService {
 
     public static SecretKey generateSecretKey(String password, byte [] iv) throws Exception {
-        KeySpec spec = new PBEKeySpec(password.toCharArray(), iv, 65536, 128); // AES-128
+        KeySpec spec = new PBEKeySpec(password.toCharArray(), iv, 65536, 128);
         SecretKeyFactory secretKeyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
         byte[] key = secretKeyFactory.generateSecret(spec).getEncoded();
         return new SecretKeySpec(key, "AES");
     }
 
     public byte [] encrypt(String password, byte [] data) throws Exception {
-
-        //Prepare the nonce
         SecureRandom secureRandom = new SecureRandom();
+        byte[] nonce  = new byte[12];
+        secureRandom.nextBytes(nonce );
 
-        //Noonce should be 12 bytes
-        byte[] iv = new byte[12];
-        secureRandom.nextBytes(iv);
-
-        //Prepare your password
-        SecretKey secretKey = generateSecretKey(password, iv);
-
+        SecretKey secretKey = generateSecretKey(password, nonce );
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        GCMParameterSpec parameterSpec = new GCMParameterSpec(128, iv);
+        GCMParameterSpec parameterSpec = new GCMParameterSpec(128, nonce );
 
-        //Encryption mode on!
         cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec);
-
-        //Encrypt the data
         byte [] encryptedData = cipher.doFinal(data);
-
-        //Concatenate everything and return the final data
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + iv.length + encryptedData.length);
-        byteBuffer.putInt(iv.length);
-        byteBuffer.put(iv);
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4 + nonce .length + encryptedData.length);
+        byteBuffer.putInt(nonce .length);
+        byteBuffer.put(nonce );
         byteBuffer.put(encryptedData);
+
         return byteBuffer.array();
     }
 
     public byte [] decrypt(String password, byte [] encryptedData) throws Exception {
 
-
-        //Wrap the data into a byte buffer to ease the reading process
         ByteBuffer byteBuffer = ByteBuffer.wrap(encryptedData);
-
-        int noonceSize = byteBuffer.getInt();
-
-        //Make sure that the file was encrypted properly
-        if(noonceSize < 12 || noonceSize >= 16) {
-            throw new IllegalArgumentException("Nonce size is incorrect. Make sure that the incoming data is an AES encrypted file.");
+        int nonceSize = byteBuffer.getInt();
+        if(nonceSize < 12 || nonceSize >= 16) {
+            throw new IllegalArgumentException("Nonce incorrect");
         }
-        byte[] iv = new byte[noonceSize];
-        byteBuffer.get(iv);
 
-        //Prepare your key/password
-        SecretKey secretKey = generateSecretKey(password, iv);
-
-        //get the rest of encrypted data
+        byte[] nonce = new byte[nonceSize];
+        byteBuffer.get(nonce);
+        SecretKey secretKey = generateSecretKey(password, nonce);
         byte[] cipherBytes = new byte[byteBuffer.remaining()];
         byteBuffer.get(cipherBytes);
-
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
-        GCMParameterSpec parameterSpec = new GCMParameterSpec(128, iv);
+        GCMParameterSpec parameterSpec = new GCMParameterSpec(128, nonce);
 
-        //Encryption mode on!
         cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec);
-
-        //Encrypt the data
         return cipher.doFinal(cipherBytes);
-
     }
 
 
     public byte [] changePassword(byte [] encryptedData, ChangePasswordDto changePasswordDto) throws Exception {
         return encrypt(changePasswordDto.getNewPassword(), decrypt(changePasswordDto.getOldPassword(),encryptedData));
     }
-
-
 
 }
