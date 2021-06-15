@@ -79,20 +79,19 @@ public class UserFilesService {
 
     @Transactional
     public void changePassword(ChangePasswordDto changePasswordDto){
-        getAllFileNames(changePasswordDto.getOldPassword()).forEach(
-                userFileDto -> {
-                    try {
-                        SaveFileDto saveFileDto = new SaveFileDto(
-                                changePasswordDto.getNewPassword(),
-                                getWholeFile(userFileDto.getId(),changePasswordDto.getOldPassword())
-                        );
-                        userFilesRepository.save(mapUserFileUpdate(saveFileDto,userFileDto.getId()));
-                        fileRepository.save(mapFileUpdate(saveFileDto,userFileDto.getId()));
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-        );
+        for (UserFile userFile : userFilesRepository.getByOwner(getConnectedUsername())) {
+            try {
+                FileModel file = fileRepository.getById(userFile.getId()).orElseThrow(()-> new IllegalStateException("Fisierul nu exista"));
+                file.setBytes(encryptionService.changePassword(file.getBytes(),changePasswordDto));
+                file.setName(encryptionService.changePassword(file.getName(),changePasswordDto));
+                file.setType(encryptionService.changePassword(file.getType(),changePasswordDto));
+                userFile.setName(encryptionService.changePassword(userFile.getName(),changePasswordDto));
+                fileRepository.save(file);
+                userFilesRepository.save(userFile);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private FileDto mapDto(FileModel fileModel, String password) throws Exception {
@@ -108,24 +107,6 @@ public class UserFilesService {
                 encryptionService.encrypt(fileDto.getPassword(),fileDto.getFileDto().getName().getBytes()),
                 encryptionService.encrypt(fileDto.getPassword(),fileDto.getFileDto().getType().getBytes()),
                 encryptionService.encrypt(fileDto.getPassword(),fileDto.getFileDto().getBytes())
-        );
-    }
-
-    private FileModel mapFileUpdate(SaveFileDto fileDto, Long id) throws Exception {
-        return new FileModel(
-                id,
-                encryptionService.encrypt(fileDto.getPassword(),fileDto.getFileDto().getName().getBytes()),
-                encryptionService.encrypt(fileDto.getPassword(),fileDto.getFileDto().getType().getBytes()),
-                encryptionService.encrypt(fileDto.getPassword(),fileDto.getFileDto().getBytes())
-        );
-    }
-
-
-    private UserFile mapUserFileUpdate(SaveFileDto saveFileDto, Long id) throws Exception {
-        return new UserFile(
-                id,
-                getConnectedUsername(),
-                encryptionService.encrypt(saveFileDto.getPassword(),saveFileDto.getFileDto().getName().getBytes())
         );
     }
 
@@ -148,8 +129,4 @@ public class UserFilesService {
         }
     }
 
-//    private byte[] encryptFileName(String name, String password) throws Exception {
-//        String [] splits = name.split("\\.");
-//        return encryptionService.encrypt(password,splits[splits.length-1].getBytes());
-//    }
 }
