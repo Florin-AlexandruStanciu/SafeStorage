@@ -25,10 +25,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = repo.findById(username).orElseThrow(()->new UsernameNotFoundException("Utilizatorul nu exista"));
         return new org.springframework.security.core.userdetails.User(user.getUsername(),user.getPassword(),
-                true, true, true, true, getAuthorities("rol"));
-    }
-
-    private Collection<? extends GrantedAuthority> getAuthorities(String role){
-        return Collections.singletonList(new SimpleGrantedAuthority(role));
+                true, true, true, true,
+                Collections.singletonList(new SimpleGrantedAuthority("rol")));
     }
 }

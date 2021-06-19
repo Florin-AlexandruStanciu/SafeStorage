@@ -12,11 +12,10 @@ import java.security.cert.CertificateException;
 import java.time.Instant;
 import java.util.Date;
 
-import static io.jsonwebtoken.Jwts.parser;
 
 @Service
 public class JwtProvider {
-    public static final long JWT_EXPIRATION_TIME = 1000000L;
+    public static final long JWT_EXPIRATION_TIME = 300000L;
     private KeyStore keyStore;
 
     @PostConstruct
@@ -25,11 +24,10 @@ public class JwtProvider {
             keyStore = KeyStore.getInstance("JKS");
             InputStream resourceAsStream = getClass().getResourceAsStream("/keystore");
             keyStore.load(resourceAsStream, "password".toCharArray());
-        } catch (KeyStoreException | CertificateException | NoSuchAlgorithmException | IOException e) {
-            throw new RuntimeException("KeyStore loading exception");
+        } catch (Exception e) {
+            throw new RuntimeException("Eraore la incarcarea KeyStore-ului");
         }
     }
-
 
     public String generateToken(String username){
         return Jwts.builder()
@@ -40,7 +38,7 @@ public class JwtProvider {
     }
 
     public boolean validateToken(String jwt) {
-        parser().setSigningKey(getPublicKey()).parseClaimsJws(jwt);
+        Jwts.parser().setSigningKey(getPublicKey()).parseClaimsJws(jwt);
         return true;
     }
 
@@ -48,7 +46,7 @@ public class JwtProvider {
         try {
             return (PrivateKey) keyStore.getKey("alias", "password".toCharArray());
         } catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException e) {
-            throw new RuntimeException("PrivateKey retrieving exception");
+            throw new RuntimeException("Eroarea la recuerarea cheii private");
         }
     }
 
@@ -56,12 +54,12 @@ public class JwtProvider {
         try {
             return keyStore.getCertificate("alias").getPublicKey();
         } catch (KeyStoreException e) {
-            throw new RuntimeException("PublicKey retrieving exception");
+            throw new RuntimeException("Eroarea la recuerarea cheii publice");
         }
     }
 
     public String getUsernameFromJwt(String token) {
-        Claims claims = parser()
+        Claims claims = Jwts.parser()
                 .setSigningKey(getPublicKey())
                 .parseClaimsJws(token)
                 .getBody();

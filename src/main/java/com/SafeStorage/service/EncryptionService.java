@@ -43,7 +43,6 @@ public class EncryptionService {
     }
 
     public byte [] decrypt(String password, byte [] encryptedData) throws Exception {
-
         ByteBuffer byteBuffer = ByteBuffer.wrap(encryptedData);
         int nonceSize = byteBuffer.getInt();
         if(nonceSize < 12 || nonceSize >= 16) {
